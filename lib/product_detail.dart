@@ -398,12 +398,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 40),
                   
                   // Specifications Section
-                  const Center(child: Text("Specifications", style: TextStyle(fontSize: 22, fontFamily: 'serif'))),
+                  const Center(child: Text("Product Details", style: TextStyle(fontSize: 22, fontFamily: 'serif'))),
                   const SizedBox(height: 20),
                   
-                  _buildExpansionTile("CERTIFICATIONS", "All our jewelry comes with authenticity certificates."),
-                  _buildExpansionTile("PRODUCT DESCRIPTION", product['description'] ?? "No description available."),
-                  _buildExpansionTile("SHIPPING & RETURNS", "Free shipping over ₹999. Easy 7-day returns on unworn items."),
+                  _buildExpansionTile("PRODUCT DESCRIPTION", product['description'] ?? "No description available.", initiallyExpanded: true),
                   
                   const SizedBox(height: 40),
                   const Divider(),
@@ -468,10 +466,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
   
-  Widget _buildExpansionTile(String title, String content) {
+  Widget _buildExpansionTile(String title, String content, {bool initiallyExpanded = false}) {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
         tilePadding: EdgeInsets.zero,
         title: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
         iconColor: Colors.black,
