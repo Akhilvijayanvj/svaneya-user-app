@@ -14,6 +14,7 @@ class _AccountScreenState extends State<AccountScreen> {
   final passwordController = TextEditingController();
   bool isLoading = false;
   bool isLogin = true;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -105,12 +106,20 @@ class _AccountScreenState extends State<AccountScreen> {
                 const Divider(),
                 TextField(
                   controller: passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: "Password",
                     border: InputBorder.none,
-                    icon: Icon(Icons.lock_outline, color: Colors.grey),
+                    icon: const Icon(Icons.lock_outline, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                 ),
               ],
             ),
