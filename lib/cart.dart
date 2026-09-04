@@ -2,24 +2,59 @@ import 'package:flutter/material.dart';
 import 'checkout.dart';
 
 
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
 // Very simple global cart state for demonstration
 class CartItem {
   final Map<String, dynamic> product;
   int quantity;
 
   CartItem({required this.product, this.quantity = 1});
+
+  Map<String, dynamic> toJson() => {
+    'product': product,
+    'quantity': quantity
+  };
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      product: json['product'],
+      quantity: json['quantity']
+    );
+  }
 }
 
 class CartService extends ChangeNotifier {
   static final CartService _instance = CartService._internal();
   factory CartService() => _instance;
-  CartService._internal();
+  
+  CartService._internal() {
+    _loadCart();
+  }
 
   final List<CartItem> _items = [];
   List<CartItem> get items => _items;
 
   double get totalAmount {
     return _items.fold(0, (total, item) => total + (item.product['price'] * item.quantity));
+  }
+
+  Future<void> _loadCart() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cartStr = prefs.getString('cart_items');
+    if (cartStr != null) {
+      final List<dynamic> decoded = jsonDecode(cartStr);
+      _items.clear();
+      _items.addAll(decoded.map((e) => CartItem.fromJson(e)).toList());
+      notifyListeners();
+    }
+  }
+
+  Future<void> _saveCart() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cartStr = jsonEncode(_items.map((e) => e.toJson()).toList());
+    await prefs.setString('cart_items', cartStr);
   }
 
   void addItem(Map<String, dynamic> product) {
@@ -29,17 +64,26 @@ class CartService extends ChangeNotifier {
     } else {
       _items.add(CartItem(product: product));
     }
+    _saveCart();
     notifyListeners();
   }
 
   void removeItem(String productId) {
     _items.removeWhere((item) => item.product['id'] == productId);
+    _saveCart();
+    notifyListeners();
+  }
+
+  void clearCart() {
+    _items.clear();
+    _saveCart();
     notifyListeners();
   }
 
   void incrementQuantity(String productId) {
     final item = _items.firstWhere((item) => item.product['id'] == productId);
     item.quantity += 1;
+    _saveCart();
     notifyListeners();
   }
 
@@ -50,6 +94,7 @@ class CartService extends ChangeNotifier {
     } else {
       _items.remove(item);
     }
+    _saveCart();
     notifyListeners();
   }
 }
