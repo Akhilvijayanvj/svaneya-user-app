@@ -4,6 +4,7 @@ import 'cart.dart';
 import 'main.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -480,7 +481,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             padding: const EdgeInsets.only(bottom: 16.0),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(content, style: TextStyle(color: Colors.grey.shade700, height: 1.5, fontSize: 14)),
+              child: HtmlWidget(
+                content,
+                textStyle: TextStyle(
+                  color: Colors.grey.shade700,
+                  height: 1.5,
+                  fontSize: 14.0,
+                ),
+              ),
             ),
           )
         ],
