@@ -32,11 +32,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-    
-    // Attempt to prefill email if logged in
+
     final user = supabase.auth.currentUser;
-    if (user != null && user.email != null) {
-      _emailCtrl.text = user.email!;
+    if (user != null) {
+      _emailCtrl.text = user.email ?? '';
+      _loadPreviousAddress();
+    }
+  }
+
+  Future<void> _loadPreviousAddress() async {
+    final user = supabase.auth.currentUser;
+    if (user == null || user.email == null) return;
+    try {
+      final res = await supabase
+          .from('orders')
+          .select()
+          .eq('customer_email', user.email!)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (res != null && mounted) {
+        setState(() {
+          if (_nameCtrl.text.isEmpty) _nameCtrl.text = res['customer_name'] ?? '';
+          if (_phoneCtrl.text.isEmpty) _phoneCtrl.text = res['customer_phone'] ?? '';
+          if (res['shipping_address'] != null) {
+            final addr = res['shipping_address'];
+            if (_addressCtrl.text.isEmpty) _addressCtrl.text = addr['address'] ?? '';
+            if (_cityCtrl.text.isEmpty) _cityCtrl.text = addr['city'] ?? '';
+            if (_pinCtrl.text.isEmpty) _pinCtrl.text = addr['pincode'] ?? '';
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Could not load previous address: $e");
     }
   }
 
@@ -145,9 +174,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     try {
       // 1. Create order on backend (Next.js server)
-      // Note: 10.0.2.2 is the android emulator loopback to localhost
       final res = await http.post(
-        Uri.parse('http://10.0.2.2:3000/api/razorpay'),
+        Uri.parse('https://svaneya.in/api/razorpay'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'amount': cart.totalAmount,
