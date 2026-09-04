@@ -174,8 +174,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     try {
       // 1. Create order on backend (Next.js server)
+      final baseUrl = const bool.fromEnvironment('dart.vm.product') 
+          ? 'https://svaneya.in/api/razorpay'
+          : 'http://10.0.2.2:3000/api/razorpay';
+          
       final res = await http.post(
-        Uri.parse('https://svaneya.in/api/razorpay'),
+        Uri.parse(baseUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'amount': cart.totalAmount,

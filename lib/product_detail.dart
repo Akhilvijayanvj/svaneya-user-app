@@ -488,6 +488,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   height: 1.5,
                   fontSize: 14.0,
                 ),
+                customStylesBuilder: (element) {
+                  if (element.localName == 'h1') {
+                    return {'font-size': '18px', 'font-weight': 'bold', 'margin-bottom': '8px'};
+                  }
+                  if (element.localName == 'h2' || element.localName == 'h3') {
+                    return {'font-size': '16px', 'font-weight': 'bold', 'margin-top': '12px', 'margin-bottom': '6px'};
+                  }
+                  if (element.localName == 'p') {
+                    return {'margin-bottom': '8px'};
+                  }
+                  return null;
+                },
               ),
             ),
           )
