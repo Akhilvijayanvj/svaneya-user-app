@@ -20,10 +20,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<dynamic> _reviews = [];
   bool _isLoadingReviews = true;
   bool _isWishlisted = false;
+  String? _selectedColor;
 
   @override
   void initState() {
     super.initState();
+    if (widget.product['has_colors'] == true && widget.product['colors'] != null) {
+      final List<dynamic> colors = widget.product['colors'];
+      if (colors.isNotEmpty) {
+        _selectedColor = colors[0].toString();
+      }
+    }
     _fetchReviews();
     _checkWishlistStatus();
   }
@@ -247,6 +254,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         style: TextStyle(color: Colors.deepOrange.shade700, fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                     ),
+
+                  // Colors
+                  if (product['has_colors'] == true && product['colors'] != null && (product['colors'] as List).isNotEmpty) ...[
+                    Text(
+                      product['color_heading'] ?? 'Color',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: (product['colors'] as List).map((c) {
+                        final isSelected = _selectedColor == c.toString();
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedColor = c.toString()),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.black : Colors.white,
+                              border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              c.toString(),
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.black,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                     
                   // Quantity & Add to Cart
                   Row(
@@ -281,8 +324,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           height: 48,
                           child: ElevatedButton.icon(
                             onPressed: () async {
+                              final cartProduct = Map<String, dynamic>.from(product);
+                              if (_selectedColor != null) {
+                                cartProduct['selected_color'] = _selectedColor;
+                              }
                               for(int i = 0; i < _quantity; i++){
-                                CartService().addItem(product);
+                                CartService().addItem(cartProduct);
                               }
                               
                               // Schedule Abandoned Cart Reminder

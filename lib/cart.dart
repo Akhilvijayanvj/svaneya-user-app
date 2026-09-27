@@ -23,6 +23,12 @@ class CartItem {
       quantity: json['quantity']
     );
   }
+  String get cartItemId {
+    if (product['selected_color'] != null) {
+      return "${product['id']}_${product['selected_color']}";
+    }
+    return "${product['id']}";
+  }
 }
 
 class CartService extends ChangeNotifier {
@@ -58,7 +64,8 @@ class CartService extends ChangeNotifier {
   }
 
   void addItem(Map<String, dynamic> product) {
-    final existingIndex = _items.indexWhere((item) => item.product['id'] == product['id']);
+    final tempItem = CartItem(product: product);
+    final existingIndex = _items.indexWhere((item) => item.cartItemId == tempItem.cartItemId);
     if (existingIndex >= 0) {
       _items[existingIndex].quantity += 1;
     } else {
@@ -68,8 +75,8 @@ class CartService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeItem(String productId) {
-    _items.removeWhere((item) => item.product['id'] == productId);
+  void removeItem(String cartItemId) {
+    _items.removeWhere((item) => item.cartItemId == cartItemId);
     _saveCart();
     notifyListeners();
   }
@@ -80,15 +87,15 @@ class CartService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void incrementQuantity(String productId) {
-    final item = _items.firstWhere((item) => item.product['id'] == productId);
+  void incrementQuantity(String cartItemId) {
+    final item = _items.firstWhere((item) => item.cartItemId == cartItemId);
     item.quantity += 1;
     _saveCart();
     notifyListeners();
   }
 
-  void decrementQuantity(String productId) {
-    final item = _items.firstWhere((item) => item.product['id'] == productId);
+  void decrementQuantity(String cartItemId) {
+    final item = _items.firstWhere((item) => item.cartItemId == cartItemId);
     if (item.quantity > 1) {
       item.quantity -= 1;
     } else {
@@ -183,6 +190,13 @@ class _CartScreenState extends State<CartScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
+                                if (item.product['selected_color'] != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "${item.product['color_heading'] ?? 'Color'}: ${item.product['selected_color']}",
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                  ),
+                                ],
                                 const SizedBox(height: 4),
                                 Text(
                                   "₹${item.product['price']}",
@@ -191,16 +205,16 @@ class _CartScreenState extends State<CartScreen> {
                                 const SizedBox(height: 8),
                                 Row(
                                   children: [
-                                    _buildQtyBtn(Icons.remove, () => cart.decrementQuantity(item.product['id'])),
+                                    _buildQtyBtn(Icons.remove, () => cart.decrementQuantity(item.cartItemId)),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12),
                                       child: Text("${item.quantity}", style: const TextStyle(fontWeight: FontWeight.bold)),
                                     ),
-                                    _buildQtyBtn(Icons.add, () => cart.incrementQuantity(item.product['id'])),
+                                    _buildQtyBtn(Icons.add, () => cart.incrementQuantity(item.cartItemId)),
                                     const Spacer(),
                                     IconButton(
                                       icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                      onPressed: () => cart.removeItem(item.product['id']),
+                                      onPressed: () => cart.removeItem(item.cartItemId),
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
                                     ),
