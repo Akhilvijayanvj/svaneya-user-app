@@ -413,7 +413,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(LucideIcons.checkCircle2, color: Colors.black, size: 42, strokeWidth: 1.5),
+                                          const Icon(LucideIcons.checkCircle2, color: Colors.black, size: 42),
                                           const SizedBox(height: 16),
                                           const Text(
                                             "ADDED TO CART",
