@@ -22,6 +22,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isWishlisted = false;
   String? _selectedColor;
 
+  Color _getColorFromName(String name) {
+    final lowerName = name.toLowerCase().replaceAll(' ', '');
+    switch(lowerName) {
+      case 'red': return Colors.red;
+      case 'blue': return Colors.blue;
+      case 'green': return Colors.green;
+      case 'yellow': return Colors.yellow;
+      case 'orange': return Colors.orange;
+      case 'purple': return Colors.purple;
+      case 'pink': return Colors.pink.shade300;
+      case 'black': return Colors.black;
+      case 'white': return Colors.white;
+      case 'grey': return Colors.grey;
+      case 'gray': return Colors.grey;
+      case 'gold': return const Color(0xFFFFD700);
+      case 'silver': return const Color(0xFFC0C0C0);
+      case 'rosegold': return const Color(0xFFB76E79);
+      case 'brown': return Colors.brown;
+      case 'navy': return const Color(0xFF000080);
+      case 'teal': return Colors.teal;
+      case 'cyan': return Colors.cyan;
+      default: return Colors.transparent;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -269,20 +294,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         final isSelected = _selectedColor == c.toString();
                         return GestureDetector(
                           onTap: () => setState(() => _selectedColor = c.toString()),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.grey.shade100 : Colors.white,
-                              border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300, width: isSelected ? 1.5 : 1.0),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              c.toString(),
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 14,
+                              color: Colors.white,
+                              border: Border.all(
+                                color: isSelected ? Colors.black : Colors.grey.shade300, 
+                                width: isSelected ? 1.5 : 1.0
                               ),
+                              // Square edges to match Add To Cart
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _getColorFromName(c.toString()),
+                                    border: Border.all(color: Colors.black12),
+                                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  c.toString(),
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.black : Colors.grey.shade600,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    fontSize: 14,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );
