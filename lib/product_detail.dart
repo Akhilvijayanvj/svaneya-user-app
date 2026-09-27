@@ -413,52 +413,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                                          const Icon(LucideIcons.checkCircle2, color: Colors.black, size: 42, strokeWidth: 1.5),
                                           const SizedBox(height: 16),
                                           const Text(
-                                            "Item added to your cart",
-                                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                            "ADDED TO CART",
+                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                                           ),
-                                          const SizedBox(height: 24),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            "Your item has been successfully added.",
+                                            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                                          ),
+                                          const SizedBox(height: 32),
                                           Row(
                                             children: [
                                               Expanded(
-                                                child: OutlinedButton.icon(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const CartScreen()));
-                                                  },
+                                                child: OutlinedButton(
+                                                  onPressed: () => Navigator.pop(context),
                                                   style: OutlinedButton.styleFrom(
-                                                    foregroundColor: Colors.purple.shade700,
-                                                    side: BorderSide(color: Colors.purple.shade700),
-                                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                                    foregroundColor: Colors.black,
+                                                    side: const BorderSide(color: Colors.black, width: 1),
+                                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                                                   ),
-                                                  icon: const Icon(LucideIcons.shoppingCart, size: 18),
-                                                  label: const Text("Go to Cart", style: TextStyle(fontWeight: FontWeight.bold)),
+                                                  child: const Text("CONTINUE", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0, fontSize: 13)),
                                                 ),
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
-                                                child: ElevatedButton.icon(
+                                                child: ElevatedButton(
                                                   onPressed: () {
                                                     Navigator.pop(context);
                                                     Navigator.push(context, MaterialPageRoute(builder: (context) => const CartScreen()));
-                                                    // Navigate to checkout directly if they had a checkout screen
                                                   },
                                                   style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.purple.shade700,
+                                                    backgroundColor: Colors.black,
                                                     foregroundColor: Colors.white,
-                                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                                                    elevation: 0,
                                                   ),
-                                                  icon: const Icon(LucideIcons.chevronsRight, size: 18),
-                                                  label: const Text("Buy Now", style: TextStyle(fontWeight: FontWeight.bold)),
+                                                  child: const Text("VIEW CART", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0, fontSize: 13)),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 16),
+                                          const SizedBox(height: 8),
                                         ],
                                       ),
                                     );
