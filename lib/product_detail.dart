@@ -272,14 +272,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.black : Colors.white,
-                              border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
+                              color: isSelected ? Colors.grey.shade100 : Colors.white,
+                              border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300, width: isSelected ? 1.5 : 1.0),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               c.toString(),
                               style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.black,
+                                color: Colors.black,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 fontSize: 14,
                               ),
