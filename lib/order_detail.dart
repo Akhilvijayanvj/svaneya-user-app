@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'main.dart'; // contains supabase instance
 
 class OrderDetailScreen extends StatefulWidget {
@@ -24,6 +27,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _fetchOrderItems() async {
     try {
+      // Re-fetch latest order data to ensure tracking_id is up to date
+      final freshOrder = await supabase
+          .from('orders')
+          .select()
+          .eq('id', _currentOrder['id'])
+          .maybeSingle();
+      if (freshOrder != null) {
+        _currentOrder = freshOrder;
+      }
+
       // Join order_items with products
       final data = await supabase
           .from('order_items')
@@ -64,6 +77,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     try {
       await supabase.from('orders').update({'status': 'cancelled'}).eq('id', _currentOrder['id']);
+
+      // Restore stock for each item
+      for (var item in _orderItems) {
+        final pId = item['product_id'];
+        final qty = (item['quantity'] as num?)?.toInt() ?? 1;
+        if (pId != null) {
+          final pRes = await supabase.from('products').select('stock').eq('id', pId).maybeSingle();
+          if (pRes != null) {
+            final currentStock = (pRes['stock'] as num?)?.toInt() ?? 0;
+            await supabase.from('products').update({'stock': currentStock + qty}).eq('id', pId);
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _currentOrder['status'] = 'cancelled';
@@ -79,7 +106,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final addressObj = _currentOrder['shipping_address'] ?? {};
     final addressCtrl = TextEditingController(text: addressObj['address'] ?? '');
     final cityCtrl = TextEditingController(text: addressObj['city'] ?? '');
-    final pinCtrl = TextEditingController(text: addressObj['pincode'] ?? '');
+    final pinCtrl = TextEditingController(text: addressObj['pincode'] ?? addressObj['pin'] ?? '');
 
     final Map<String, String>? result = await showDialog<Map<String, String>>(
       context: context,
@@ -124,12 +151,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  Future<void> _trackPackage(String trackingId) async {
+    final url = Uri.parse('https://shipway.in/indiapost/$trackingId');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final orderId = (_currentOrder['id'] as String).substring(0, 8).toUpperCase();
     final status = (_currentOrder['status'] as String).toLowerCase();
+    final trackingId = _currentOrder['tracking_id'] as String?;
+    final courierName = _currentOrder['courier_name'] as String? ?? 'India Post';
     
-    // Only allow edit/cancel if order is 'paid' (or basically not shipped/delivered/cancelled)
+    // Only allow edit/cancel if order is 'paid' or 'pending'
     final bool canModify = status == 'paid' || status == 'pending';
 
     return Scaffold(
@@ -160,13 +196,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: status == 'delivered' ? Colors.green.shade50 : (status == 'cancelled' ? Colors.red.shade50 : Colors.orange.shade50),
+                          color: status == 'delivered' ? Colors.green.shade50 : (status == 'cancelled' ? Colors.red.shade50 : (status == 'shipped' ? Colors.blue.shade50 : Colors.orange.shade50)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           status.toUpperCase(),
                           style: TextStyle(
-                            color: status == 'delivered' ? Colors.green.shade700 : (status == 'cancelled' ? Colors.red.shade700 : Colors.orange.shade700),
+                            color: status == 'delivered' ? Colors.green.shade700 : (status == 'cancelled' ? Colors.red.shade700 : (status == 'shipped' ? Colors.blue.shade700 : Colors.orange.shade700)),
                             fontWeight: FontWeight.bold,
                             fontSize: 12
                           ),
@@ -191,6 +227,100 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
             
             const SizedBox(height: 24),
+
+            // Live India Post Tracking Card (When Shipped / Tracking available)
+            if (trackingId != null && trackingId.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFBFFF07),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(LucideIcons.truck, color: Colors.black, size: 18),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(courierName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            const Text("Speed Post / Registered Parcel", style: TextStyle(color: Colors.white60, fontSize: 12)),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text("Consignment Number:", style: TextStyle(color: Colors.white60, fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          trackingId,
+                          style: const TextStyle(
+                            color: Color(0xFFBFFF07),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: trackingId));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Tracking number copied to clipboard!"))
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white10,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(LucideIcons.copy, color: Colors.white70, size: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _trackPackage(trackingId),
+                        icon: const Icon(LucideIcons.externalLink, size: 18),
+                        label: const Text("Track with India Post", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFBFFF07),
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             
             // Shipping Address
             Container(
@@ -216,7 +346,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   const SizedBox(height: 4),
                   if (_currentOrder['shipping_address'] != null) ...[
                     Text(_currentOrder['shipping_address']['address'] ?? '', style: TextStyle(color: Colors.grey.shade700)),
-                    Text("${_currentOrder['shipping_address']['city'] ?? ''} - ${_currentOrder['shipping_address']['pincode'] ?? ''}", style: TextStyle(color: Colors.grey.shade700)),
+                    Text("${_currentOrder['shipping_address']['city'] ?? ''} - ${_currentOrder['shipping_address']['pincode'] ?? _currentOrder['shipping_address']['pin'] ?? ''}", style: TextStyle(color: Colors.grey.shade700)),
                   ],
                   const SizedBox(height: 4),
                   Text("Phone: ${_currentOrder['customer_phone'] ?? ''}", style: TextStyle(color: Colors.grey.shade700)),
