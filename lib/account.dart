@@ -58,6 +58,44 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    setState(() => isLoading = true);
+    try {
+      await supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'io.supabase.svaneya://login-callback',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('AuthException: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Widget _buildGoogleLogo() {
+    return Container(
+      width: 20,
+      height: 20,
+      margin: const EdgeInsets.only(right: 8),
+      child: Image.network(
+        'https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => const Icon(
+          Icons.g_mobiledata,
+          size: 24,
+          color: Color(0xFF4285F4),
+        ),
+      ),
+    );
+  }
+
   Future<void> signOut() async {
     await supabase.auth.signOut();
   }
@@ -143,6 +181,52 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
           
+          const SizedBox(height: 20),
+
+          Row(
+            children: [
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  "OR",
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Google Sign In Button
+          SizedBox(
+            height: 54,
+            child: OutlinedButton.icon(
+              onPressed: isLoading ? null : signInWithGoogle,
+              icon: _buildGoogleLogo(),
+              label: const Text(
+                "Continue with Google",
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: BorderSide(color: Colors.grey.shade300),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ),
+          
           const SizedBox(height: 24),
           
           TextButton(
@@ -170,6 +254,9 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Widget _buildProfileScreen(User user) {
+    final avatarUrl = user.userMetadata?['avatar_url'] as String?;
+    final displayName = user.userMetadata?['full_name'] ?? user.userMetadata?['name'] ?? user.email ?? 'Customer';
+
     return ListView(
       padding: const EdgeInsets.all(24.0),
       children: [
@@ -178,7 +265,8 @@ class _AccountScreenState extends State<AccountScreen> {
             CircleAvatar(
               radius: 30,
               backgroundColor: Colors.grey.shade200,
-              child: const Icon(Icons.person, size: 30, color: Colors.grey),
+              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+              child: avatarUrl == null ? const Icon(Icons.person, size: 30, color: Colors.grey) : null,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -186,7 +274,9 @@ class _AccountScreenState extends State<AccountScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("Hello,", style: TextStyle(color: Colors.grey, fontSize: 14)),
-                  Text(user.email ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(displayName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  if (user.email != null && displayName != user.email)
+                    Text(user.email!, style: TextStyle(fontSize: 13, color: Colors.grey.shade600), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
