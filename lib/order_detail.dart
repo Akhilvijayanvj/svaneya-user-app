@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'tracking_screen.dart';
 import 'main.dart'; // contains supabase instance
 
 class OrderDetailScreen extends StatefulWidget {
@@ -148,13 +148,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update address: $e")));
-    }
-  }
-
-  Future<void> _trackPackage(String trackingId) async {
-    final url = Uri.parse('https://shipway.in/indiapost/$trackingId');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -305,8 +298,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () => _trackPackage(trackingId),
-                        icon: const Icon(LucideIcons.externalLink, size: 18),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TrackingScreen(
+                                trackingId: trackingId,
+                                order: _currentOrder,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(LucideIcons.truck, size: 18),
                         label: const Text("Track with India Post", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFBFFF07),
