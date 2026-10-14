@@ -159,13 +159,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
         setState(() {
           _trackingData = {
             'article_number': 'EL606813018IN',
-            'article_type': 'Speed Post Inland Parcel (SP_INLAND_PARCEL)',
+            'article_type': 'Speed Post Inland Parcel',
             'origin': 'Nellimukal BO',
             'origin_pincode': '691551',
             'destination': 'Kankanady S.O',
             'destination_pincode': '575002',
-            'booked_on': '09/10/2026, 11:29:07',
-            'delivered_on': '12/10/2026, 15:40:26',
+            'booked_on': '09 Oct 2026, 11:29 AM',
+            'delivered_on': '12 Oct 2026, 03:40 PM',
             'status': 'DELIVERED',
             'current_stage': 4,
             'recipient_name': 'Joyel',
@@ -276,13 +276,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
       setState(() {
         _trackingData = {
           'article_number': cleanId,
-          'article_type': 'Speed Post Inland Parcel (SP_INLAND_PARCEL)',
+          'article_type': 'Speed Post Inland Parcel',
           'origin': originOffice,
           'origin_pincode': originPin,
           'destination': destOffice,
           'destination_pincode': destPin,
-          'booked_on': '${bookedDate.day.toString().padLeft(2, '0')}/${bookedDate.month.toString().padLeft(2, '0')}/${bookedDate.year}, 11:29:07',
-          'delivered_on': isDelivered ? '${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().year}, 15:40:26' : null,
+          'booked_on': '${bookedDate.day.toString().padLeft(2, '0')} Oct ${bookedDate.year}, 11:29 AM',
+          'delivered_on': isDelivered ? '${DateTime.now().day.toString().padLeft(2, '0')} Oct ${DateTime.now().year}, 03:40 PM' : null,
           'status': isDelivered ? 'DELIVERED' : 'IN_TRANSIT',
           'current_stage': isDelivered ? 4 : (orderStatus == 'shipped' ? 2 : 1),
           'recipient_name': isDelivered ? customerName : null,
@@ -294,7 +294,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Future<void> _openOfficialPortal() async {
-    final cleanId = widget.trackingId.trim().toUpperCase();
     final url = Uri.parse('https://www.indiapost.gov.in/_layouts/15/DOP.Portal.Tracking/TrackConsignment.aspx');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -313,131 +312,100 @@ class _TrackingScreenState extends State<TrackingScreen> {
     final deliveredOn = _trackingData?['delivered_on'];
     final statusStr = (_trackingData?['status'] ?? 'IN_TRANSIT').toString().toUpperCase();
     final isDelivered = statusStr == 'DELIVERED';
-    final currentStage = (_trackingData?['current_stage'] as num?)?.toInt() ?? (isDelivered ? 4 : 2);
     final List<dynamic> routingSteps = _trackingData?['routing_steps'] ?? [];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFBF9),
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         title: const Text(
-          'TRACK SHIPMENT',
+          'Package information',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            letterSpacing: 1.5,
-            color: Colors.black,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            letterSpacing: -0.2,
+            color: Color(0xFF111827),
           ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFFFDFBF9),
+        backgroundColor: const Color(0xFFF7F8FA),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF111827), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.refreshCw, color: Colors.black, size: 20),
+            icon: const Icon(LucideIcons.refreshCw, color: Color(0xFF111827), size: 18),
             onPressed: _fetchTrackingInfo,
             tooltip: 'Refresh Status',
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.black),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
           : RefreshIndicator(
               onRefresh: _fetchTrackingInfo,
               color: Colors.black,
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: [
-                  // 1. Hero Delivery Status Card (Signature Svaneya Midnight Style)
-                  _buildHeroStatusCard(
+                  // 1. Modern Top Header Card with 3D Package Icon + Live Journey Bar
+                  _buildHeaderCard(
                     articleNo: articleNo,
                     status: statusStr,
                     isDelivered: isDelivered,
-                    deliveredOn: deliveredOn,
                     origin: origin,
-                    originPin: originPin,
                     destination: destination,
-                    destinationPin: destinationPin,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // 2. Modern 5-Stage Stepper
-                  _buildModernStepper(currentStage),
-
-                  const SizedBox(height: 24),
-
-                  // 3. Package Specifications Card
-                  _buildPackageDetailsCard(
-                    articleNo: articleNo,
-                    articleType: articleType,
-                    origin: origin,
-                    originPin: originPin,
-                    destination: destination,
-                    destinationPin: destinationPin,
-                    bookedOn: bookedOn,
-                    deliveredOn: deliveredOn,
-                    recipientName: _trackingData?['recipient_name'],
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // 4. Activity History Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'ACTIVITY HISTORY',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${routingSteps.length} Updates',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
 
                   const SizedBox(height: 16),
 
-                  // 5. Modern Activity Timeline
-                  _buildActivityTimeline(routingSteps),
+                  // 2. Modern Overview Progress Summary (Image 5 style)
+                  _buildOverviewProgressCard(
+                    isDelivered: isDelivered,
+                    deliveredOn: deliveredOn,
+                    totalSteps: routingSteps.length,
+                  ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
 
-                  // 6. Direct Verification / Official Portal Footer
-                  Center(
-                    child: TextButton.icon(
+                  // 3. Package Details Card (Image 1 & 2 style)
+                  _buildDeliveryDetailsCard(
+                    articleType: articleType,
+                    origin: '$origin ($originPin)',
+                    destination: '$destination ($destinationPin)',
+                    bookedOn: bookedOn,
+                    deliveredOn: deliveredOn,
+                    recipient: _trackingData?['recipient_name'] ?? 'Addressee',
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 4. Trip Info / Timeline with Hub grouping (Image 1, 3, & 5 style)
+                  _buildTripInfoTimeline(routingSteps, isDelivered),
+
+                  const SizedBox(height: 20),
+
+                  // 5. Full-width Black Action Button (Image 2 style)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton.icon(
                       onPressed: _openOfficialPortal,
-                      icon: const Icon(LucideIcons.externalLink, size: 16, color: Colors.black54),
+                      icon: const Icon(LucideIcons.truck, size: 18, color: Colors.white),
                       label: const Text(
-                        'Verify on India Post Official Portal',
+                        'Track on Official India Post Portal',
                         style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
                         ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF111827),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                     ),
                   ),
@@ -449,593 +417,642 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
-  // 1. Hero Status Card (Midnight Slate Gradient with Svaneya Neon Lime Highlights)
-  Widget _buildHeroStatusCard({
+  // 1. Top Header Card (Inspired by Image 1 & 2)
+  Widget _buildHeaderCard({
     required String articleNo,
     required String status,
     required bool isDelivered,
-    required String? deliveredOn,
     required String origin,
-    required String originPin,
     required String destination,
-    required String destinationPin,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: Courier + Status Badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFBFFF07),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(LucideIcons.truck, color: Colors.black, size: 16),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'India Post Speed Post',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isDelivered ? const Color(0xFFBFFF07) : Colors.amber.shade400,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isDelivered ? LucideIcons.checkCircle2 : LucideIcons.clock,
-                      size: 13,
-                      color: Colors.black,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      status,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Big Status Headline
-          Text(
-            isDelivered ? 'Package Delivered' : 'In Transit',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            isDelivered && deliveredOn != null
-                ? 'Delivered on $deliveredOn'
-                : 'Expected delivery in 2-3 business days',
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Consignment Number Pill with Copy Action
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'CONSIGNMENT NUMBER',
-                      style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      articleNo,
-                      style: const TextStyle(
-                        color: Color(0xFFBFFF07),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: articleNo));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Consignment number copied to clipboard!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(LucideIcons.copy, color: Colors.white, size: 16),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Route Indicator (Origin -> Destination)
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'ORIGIN',
-                      style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 0.8),
-                    ),
-                    Text(
-                      origin,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (originPin.isNotEmpty)
-                      Text(
-                        'PIN $originPin',
-                        style: const TextStyle(color: Colors.white54, fontSize: 11),
-                      ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(LucideIcons.arrowRight, color: Color(0xFFBFFF07), size: 16),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'DESTINATION',
-                      style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 0.8),
-                    ),
-                    Text(
-                      destination,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (destinationPin.isNotEmpty)
-                      Text(
-                        'PIN $destinationPin',
-                        style: const TextStyle(color: Colors.white54, fontSize: 11),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 2. Modern 5-Stage Stepper
-  Widget _buildModernStepper(int currentStage) {
-    final stages = [
-      'Booked',
-      'Dispatched',
-      'In Transit',
-      'Out for Delivery',
-      'Delivered',
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: List.generate(stages.length * 2 - 1, (index) {
-          if (index.isEven) {
-            final stageIdx = index ~/ 2;
-            final isCompleted = stageIdx <= currentStage;
-            final isCurrent = stageIdx == currentStage;
-
-            return Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      color: isCompleted ? Colors.black : Colors.grey.shade100,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isCompleted ? Colors.black : Colors.grey.shade300,
-                        width: isCurrent ? 2 : 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: isCompleted
-                          ? const Icon(Icons.check, color: Color(0xFFBFFF07), size: 14)
-                          : Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade400,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    stages[stageIdx],
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: isCompleted ? FontWeight.bold : FontWeight.w500,
-                      color: isCompleted ? Colors.black87 : Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            final connectorIdx = index ~/ 2;
-            final isPassed = connectorIdx < currentStage;
-
-            return Container(
-              width: 14,
-              height: 2,
-              margin: const EdgeInsets.only(bottom: 20),
-              color: isPassed ? Colors.black : Colors.grey.shade300,
-            );
-          }
-        }),
-      ),
-    );
-  }
-
-  // 3. Package Specifications Card
-  Widget _buildPackageDetailsCard({
-    required String articleNo,
-    required String articleType,
-    required String origin,
-    required String originPin,
-    required String destination,
-    required String destinationPin,
-    required String bookedOn,
-    required String? deliveredOn,
-    required String? recipientName,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'SHIPMENT SPECIFICATIONS',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: _buildInfoItem(
-                  icon: LucideIcons.package,
-                  label: 'Article Type',
-                  value: 'Speed Post Inland Parcel',
+              // 3D Package Icon Container
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Center(
+                  child: Icon(LucideIcons.package, color: Color(0xFF111827), size: 24),
                 ),
               ),
+              const SizedBox(width: 14),
+
+              // Tracking ID + Status
               Expanded(
-                child: _buildInfoItem(
-                  icon: LucideIcons.calendar,
-                  label: 'Booked On',
-                  value: bookedOn,
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInfoItem(
-                  icon: LucideIcons.mapPin,
-                  label: 'Origin Office',
-                  value: '$origin ($originPin)',
-                ),
-              ),
-              Expanded(
-                child: _buildInfoItem(
-                  icon: LucideIcons.navigation,
-                  label: 'Destination Office',
-                  value: '$destination ($destinationPin)',
-                ),
-              ),
-            ],
-          ),
-          if (deliveredOn != null) ...[
-            const Divider(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem(
-                    icon: LucideIcons.checkCircle2,
-                    label: 'Delivered On',
-                    value: deliveredOn,
-                  ),
-                ),
-                if (recipientName != null && recipientName.isNotEmpty)
-                  Expanded(
-                    child: _buildInfoItem(
-                      icon: LucideIcons.user,
-                      label: 'Received By',
-                      value: recipientName,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Tracking: $articleNo',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: articleNo));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Tracking ID copied to clipboard!'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          child: const Icon(LucideIcons.copy, size: 15, color: Color(0xFF6B7280)),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isDelivered ? 'Delivered successfully' : 'In transit to destination',
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Status Pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: isDelivered ? const Color(0xFFECFDF5) : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  isDelivered ? '• Delivered' : '• In Transit',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDelivered ? const Color(0xFF059669) : const Color(0xFF2563EB),
                   ),
-              ],
-            ),
-          ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Journey Route Track (Origin ➔ Moving Truck ➔ Destination)
+          Row(
+            children: [
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Gray track line
+                    Container(height: 3, color: const Color(0xFFE5E7EB)),
+                    // Active colored progress line
+                    FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: isDelivered ? 1.0 : 0.65,
+                      child: Container(
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: isDelivered ? const Color(0xFF10B981) : const Color(0xFF111827),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    // Centered Moving Vehicle Icon
+                    Align(
+                      alignment: isDelivered ? Alignment.centerRight : const Alignment(0.3, 0),
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDelivered ? const Color(0xFF10B981) : const Color(0xFF111827),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isDelivered ? LucideIcons.check : LucideIcons.truck,
+                          size: 13,
+                          color: isDelivered ? const Color(0xFF10B981) : const Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Origin and Destination City Labels
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(LucideIcons.mapPin, size: 13, color: Color(0xFF9CA3AF)),
+                  const SizedBox(width: 4),
+                  Text(
+                    origin,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF4B5563)),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const Icon(LucideIcons.navigation, size: 13, color: Color(0xFF9CA3AF)),
+                  const SizedBox(width: 4),
+                  Text(
+                    destination,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF4B5563)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoItem({
-    required IconData icon,
-    required String label,
-    required String value,
+  // 2. Overview Progress Summary (Inspired by Image 5)
+  Widget _buildOverviewProgressCard({
+    required bool isDelivered,
+    required String? deliveredOn,
+    required int totalSteps,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: Colors.grey.shade600),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // 4. Modern Activity Timeline
-  Widget _buildActivityTimeline(List<dynamic> steps) {
-    if (steps.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: const Center(
-          child: Text(
-            'Shipment booked. Awaiting first transit scan.',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: steps.length,
-        separatorBuilder: (context, index) => Divider(
-          color: Colors.grey.shade100,
-          height: 1,
-          indent: 52,
-        ),
-        itemBuilder: (context, index) {
-          final step = steps[index];
-          final isFirst = index == 0;
-          final isDeliveredEvent = (step['event'] ?? '').toString().toLowerCase().contains('delivered');
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'OVERVIEW',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: Color(0xFF9CA3AF),
+            ),
+          ),
+          const SizedBox(height: 14),
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Timeline node
-                Column(
-                  children: [
-                    Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: isDeliveredEvent
-                            ? const Color(0xFFBFFF07)
-                            : (isFirst ? Colors.black : Colors.grey.shade200),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          isDeliveredEvent
-                              ? Icons.check
-                              : (isFirst ? LucideIcons.truck : Icons.circle),
-                          size: isDeliveredEvent ? 14 : (isFirst ? 11 : 6),
-                          color: isDeliveredEvent ? Colors.black : (isFirst ? Colors.white : Colors.grey.shade500),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 14),
-
-                // Event description + Location
-                Expanded(
+          // 3 Stat Boxes
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        step['event'] ?? 'Transit Update',
+                        isDelivered ? '$totalSteps' : '${totalSteps > 2 ? totalSteps - 2 : 1}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF059669),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'COMPLETED',
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isFirst ? FontWeight.bold : FontWeight.w600,
-                          color: Colors.black87,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: Color(0xFF059669),
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Icon(LucideIcons.mapPin, size: 12, color: Colors.grey.shade500),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              step['location'] ?? '',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (step['details'] != null && (step['details'] as String).isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            step['details'],
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade800, fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isDelivered ? const Color(0xFFF3F4F6) : const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        isDelivered ? '0' : '1',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDelivered ? const Color(0xFF9CA3AF) : const Color(0xFF2563EB),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'IN TRANSIT',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: isDelivered ? const Color(0xFF9CA3AF) : const Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        isDelivered ? '0' : '1',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'REMAINING',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
 
-                const SizedBox(width: 12),
+          const SizedBox(height: 18),
 
-                // Date & Time
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+          // Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: isDelivered ? 1.0 : 0.65,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFE5E7EB),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isDelivered ? const Color(0xFF10B981) : const Color(0xFF2563EB),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Bottom date + percentage label
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isDelivered && deliveredOn != null
+                    ? 'DELIVERED: $deliveredOn'
+                    : 'EST. DELIVERY: IN 2-3 DAYS',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF6B7280),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Text(
+                isDelivered ? '100% COMPLETE' : '65% COMPLETE',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF6B7280),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. Package Details Card (Inspired by Image 1 & 2)
+  Widget _buildDeliveryDetailsCard({
+    required String articleType,
+    required String origin,
+    required String destination,
+    required String bookedOn,
+    required String? deliveredOn,
+    required String recipient,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(LucideIcons.truck, size: 16, color: Color(0xFF111827)),
+              SizedBox(width: 8),
+              Text(
+                'Delivery Details',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow('Courier', 'India Post Speed Post'),
+          _buildDetailRow('Service Type', articleType),
+          _buildDetailRow('From Hub', origin),
+          _buildDetailRow('Destination', destination),
+          _buildDetailRow('Booked On', bookedOn),
+          if (deliveredOn != null) _buildDetailRow('Delivered On', deliveredOn),
+          _buildDetailRow('Recipient', recipient),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. Trip Info / Timeline with Grouped Hub Checkpoints (Inspired by Image 1, 3, & 5)
+  Widget _buildTripInfoTimeline(List<dynamic> steps, bool isDelivered) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(LucideIcons.milestone, size: 16, color: Color(0xFF111827)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Trip Info',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${steps.length} Scans',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Stepper / Timeline rows
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: steps.length,
+            itemBuilder: (context, index) {
+              final step = steps[index];
+              final isLatest = index == 0;
+              final isDeliveredStep = (step['event'] ?? '').toString().toLowerCase().contains('delivered');
+              final isLast = index == steps.length - 1;
+
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      step['date'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                    // Timeline connector column
+                    SizedBox(
+                      width: 24,
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: isDeliveredStep
+                                  ? const Color(0xFF10B981)
+                                  : (isLatest ? const Color(0xFF111827) : Colors.white),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDeliveredStep
+                                    ? const Color(0xFF10B981)
+                                    : (isLatest ? const Color(0xFF111827) : const Color(0xFFD1D5DB)),
+                                width: isDeliveredStep || isLatest ? 2 : 2,
+                              ),
+                            ),
+                            child: isDeliveredStep
+                                ? const Center(child: Icon(Icons.check, color: Colors.white, size: 9))
+                                : null,
+                          ),
+                          if (!isLast)
+                            Expanded(
+                              child: Container(
+                                width: 2,
+                                color: const Color(0xFFE5E7EB),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      step['time'] ?? '',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
+                    const SizedBox(width: 12),
+
+                    // Event Content
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    step['event'] ?? 'Transit Update',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isLatest ? FontWeight.bold : FontWeight.w600,
+                                      color: isLatest ? const Color(0xFF111827) : const Color(0xFF374151),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  step['time'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF111827),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(LucideIcons.mapPin, size: 12, color: Color(0xFF9CA3AF)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      step['location'] ?? '',
+                                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  step['date'] ?? '',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                                ),
+                              ],
+                            ),
+                            if (step['details'] != null && (step['details'] as String).isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  step['details'],
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ],
       ),
     );
   }
